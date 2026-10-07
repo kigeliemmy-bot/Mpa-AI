@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="rw">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mpa AI</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #0b0f19;
+      color: white;
+      min-height: 100vh;
+    }
+
+    header {
+      padding: 20px;
+      text-align: center;
+      border-bottom: 1px solid #252b3a;
+    }
+
+    header h1 {
+      font-size: 28px;
+    }
+
+    header p {
+      color: #9ca3af;
+      margin-top: 6px;
+    }
+
+    .chat {
+      max-width: 700px;
+      margin: auto;
+      padding: 25px 15px 120px;
+    }
+
+    .welcome {
+      text-align: center;
+      margin: 80px 0 30px;
+    }
+
+    .welcome h2 {
+      font-size: 30px;
+      margin-bottom: 10px;
+    }
+
+    .welcome p {
+      color: #9ca3af;
+    }
+
+    .input-area {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #0b0f19;
+      padding: 15px;
+      border-top: 1px solid #252b3a;
+    }
+
+    .input-box {
+      max-width: 700px;
+      margin: auto;
+      display: flex;
+      gap: 10px;
+    }
+
+    textarea {
+      flex: 1;
+      background: #151b28;
+      color: white;
+      border: 1px solid #30384a;
+      border-radius: 14px;
+      padding: 14px;
+      resize: none;
+      outline: none;
+      font-size: 16px;
+    }
+
+    button {
+      background: #6c5ce7;
+      color: white;
+      border: none;
+      border-radius: 14px;
+      padding: 0 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .message {
+      background: #151b28;
+      padding: 15px;
+      border-radius: 14px;
+      margin-bottom: 12px;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <h1>🤖 Mpa AI</h1>
+    <p>AI ivuga Kinyarwanda</p>
+  </header>
+
+  <main class="chat" id="chat">
+    <div class="welcome">
+      <h2>Murakaza neza kuri Mpa AI</h2>
+      <p>Andika ikibazo cyawe mu Kinyarwanda cyangwa English.</p>
+    </div>
+  </main>
+
+  <div class="input-area">
+    <div class="input-box">
+      <textarea id="question" rows="2"
+        placeholder="Andika ikibazo hano..."></textarea>
+      <button onclick="sendMessage()">Ohereza</button>
+    </div>
+  </div>
+
+  <script>
+    function sendMessage() {
+      const input = document.getElementById("question");
+      const chat = document.getElementById("chat");
+      const question = input.value.trim();
+
+      if (!question) return;
+
+      const userMessage = document.createElement("div");
+      userMessage.className = "message";
+      userMessage.innerHTML = "<strong>Wowe:</strong><br>" + question;
+
+      chat.appendChild(userMessage);
+
+      const aiMessage = document.createElement("div");
+      aiMessage.className = "message";
+      aiMessage.innerHTML =
+        "<strong>Mpa AI:</strong><br>" +
+        "Ndakumva. Mpa akanya gato, turimo gutegura AI izajya igusubiza neza.";
+
+      chat.appendChild(aiMessage);
+
+      input.value = "";
+      window.scrollTo(0, document.body.scrollHeight);
+    }
+  </script>
+
+</body>
+</html>
