@@ -22,8 +22,6 @@ export default {
           "@cf/meta/llama-3.1-8b-instruct-fast",
 {
   messages: [
-            messages: [
-              {
                 role: "system",
                 content:
                   "Uri Mpa AI. Subiza neza kandi mu buryo bworoshye. Niba umuntu abajije mu Kinyarwanda, subiza mu Kinyarwanda. Niba abajije mu English, subiza mu English."
