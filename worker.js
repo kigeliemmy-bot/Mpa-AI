@@ -13,7 +13,7 @@ export default {
 
         if (!message) {
           return Response.json(
-            { error: "Andika ikibazo mbere." },
+            { error: String(error) }
             { status: 400 }
           );
         }
