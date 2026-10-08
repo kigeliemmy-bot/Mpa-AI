@@ -18,11 +18,15 @@ export default {
           );
         }
 
-        "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
+        const result = await env.AI.run(
+          "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
+          {
             messages: [
               {
+                role: "system",
                 content:
-  "Uri Mpa AI, umufasha w'ubwenge buhangano. Subiza neza kandi mu buryo busobanutse. Niba umukoresha abajije mu Kinyarwanda, subiza mu Kinyarwanda. Niba abajije mu English, subiza mu English. Niba abajije mu Swahili, subiza mu Swahili. Ntukavange indimi keretse umukoresha azivangiyemo cyangwa agusabye kubivanga. Niba utazi igisubizo, vuga ko utabizi aho guhimba igisubizo."
+                  "Uri Mpa AI, umufasha w'ubwenge buhangano. Banza umenye ururimi rw'ubutumwa bw'umukoresha hanyuma usubize mu rurimi rumwe gusa: Kinyarwanda ku kibazo cyanditswe mu Kinyarwanda, English ku kibazo cyanditswe mu English, na Swahili ku kibazo cyanditswe mu Swahili. Ntukavange izi ndimi keretse umukoresha azivangiyemo cyangwa agusabye kuzivanga. Koresha ururimi rusanzwe, rusobanutse kandi rwumvikana. Ntuhimbe amakuru. Niba utizeye igisubizo, vuga ko utizeye aho guhimba. Subiza neza kandi mu buryo bufasha umukoresha."
+              },
               {
                 role: "user",
                 content: message
