@@ -128,6 +128,8 @@
   <script>
     
 async function sendMessage() {
+<script>
+async function sendMessage() {
   const input = document.getElementById("question");
   const chat = document.getElementById("chat");
   const question = input.value.trim();
@@ -140,6 +142,9 @@ async function sendMessage() {
   chat.appendChild(userMessage);
 
   const aiMessage = document.createElement("div");
+  aiMessage.className = "message";
+  aiMessage.textContent = "Mpa AI: Ndimo gutekereza...";
+  chat.appendChild(aiMessage);
 
   input.value = "";
 
@@ -160,14 +165,14 @@ async function sendMessage() {
       throw new Error(data.error || "Habaye ikibazo.");
     }
 
-    aiMessage.textContent =
-  "Mpa AI: " + error.message;
-    aiMessage.textContent =
-      "Mpa AI: Habaye ikibazo. Ongera ugerageze.";
+    aiMessage.textContent = "Mpa AI: " + data.answer;
+  } catch (error) {
+    aiMessage.textContent = "Mpa AI: " + error.message;
   }
 
   window.scrollTo(0, document.body.scrollHeight);
 }
+</script>
       
   </script>
 
