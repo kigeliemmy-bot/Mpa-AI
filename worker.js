@@ -2,217 +2,239 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
+    // Serve website
     if (request.method === "GET") {
       return env.ASSETS.fetch(request);
     }
 
+    // AI Chat API
     if (url.pathname === "/api/chat" && request.method === "POST") {
       try {
         const body = await request.json();
         const message = body.message?.trim();
 
         if (!message) {
-          return Response.json(
-            { error: "Andika ikibazo mbere." },
-            { status: 400 }
+          return new Response(
+            JSON.stringify({
+              response: "Andika ikibazo cyawe."
+            }),
+            {
+              headers: {
+                "Content-Type": "application/json"
+              }
+            }
           );
         }
 
-        // =========================
+        // --------------------------------------------------
         // LANGUAGE DETECTION
-        // =========================
+        // --------------------------------------------------
 
-        const lower = message
-          .toLowerCase()
-          .normalize("NFD")
-          .replace(/[\u0300-\u036f]/g, "");
+        const text = message.toLowerCase();
 
-        const kinyarwandaPatterns = [
-          /\burwanda\b/,
-          /\burwanda\b/,
-          /\brufite\b/,
-          /\bufite\b/,
-          /\babantu\b/,
-          /\babaturage\b/,
-          /\bintara\b/,
-          /\bturere\b/,
-          /\bbangahe\b/,
-          /\bngahe\b/,
-          /\bgute\b/,
-          /\bkuki\b/,
-          /\bryari\b/,
-          /\buwuhe\b/,
-          /\bnuwuhe\b/,
-          /\bni nde\b/,
-          /\bninde\b/,
-          /\bni iki\b/,
-          /\bndifuza\b/,
-          /\bndashaka\b/,
-          /\bmbwira\b/,
-          /\bndabaza\b/,
-          /\bndakubaza\b/,
-          /\bcyane\b/,
-          /\bnone\b/,
-          /\bubu\b/,
-          /\buyu munsi\b/,
-          /\bntabwo\b/,
-          /\byego\b/,
-          /\bhoya\b/,
-          /\bndumva\b/,
-          /\bndabona\b/,
-          /\bwakora\b/,
-          /\bwakomoka\b/,
-          /\bwavuga\b/,
-          /\buziko\b/,
-          /\bcyangwa\b/
+        const kinyarwandaWords = [
+          "ndifuza",
+          "ndashaka",
+          "nuwuhe",
+          "ninde",
+          "iki",
+          "iki?",
+          "bangahe",
+          "angahe",
+          "gute",
+          "kubera iki",
+          "kuki",
+          "ryari",
+          "hehe",
+          "ute",
+          "urwanda",
+          "u rwanda",
+          "abanyarwanda",
+          "umwami",
+          "abami",
+          "amateka",
+          "igihugu",
+          "ufite",
+          "rufite",
+          "rwayobowe",
+          "wabaye",
+          "yabaye",
+          "ni iki",
+          "mbwira",
+          "nsobanurira",
+          "ese",
+          "nshaka",
+          "ndabaza",
+          "umuntu",
+          "abantu"
         ];
 
-        const swahiliPatterns = [
-          /\bnini\b/,
-          /\bnani\b/,
-          /\bwapi\b/,
-          /\blini\b/,
-          /\bkwa nini\b/,
-          /\bvipi\b/,
-          /\bngapi\b/,
-          /\bmji\b/,
-          /\bnchi\b/,
-          /\bhii\b/,
-          /\bhuyu\b/,
-          /\bnaweza\b/,
-          /\bnataka\b/,
-          /\btafadhali\b/,
-          /\bhabari\b/,
-          /\byangu\b/,
-          /\byako\b/,
-          /\byetu\b/,
-          /\bsana\b/
+        const swahiliWords = [
+          "nani",
+          "nini",
+          "wapi",
+          "kwa nini",
+          "lini",
+          "ngapi",
+          "naomba",
+          "nataka",
+          "nchi",
+          "watu",
+          "historia",
+          "mfalme",
+          "wafalme"
         ];
 
-        const englishPatterns = [
-          /\bwhat\b/,
-          /\bwho\b/,
-          /\bwhere\b/,
-          /\bwhen\b/,
-          /\bwhy\b/,
-          /\bhow\b/,
-          /\bwhich\b/,
-          /\bwhat's\b/,
-          /\bwhats\b/,
-          /\bis\b/,
-          /\bare\b/,
-          /\bthe\b/,
-          /\ba\b/,
-          /\ban\b/,
-          /\bcan\b/,
-          /\bcould\b/,
-          /\bwould\b/,
-          /\bshould\b/,
-          /\btell\b/,
-          /\bgive\b/,
-          /\bexplain\b/,
-          /\bcapital\b/,
-          /\bcountry\b/,
-          /\bpeople\b/,
-          /\bpopulation\b/,
-          /\bdistricts\b/,
-          /\bprovince\b/,
-          /\bking\b/,
-          /\bqueen\b/,
-          /\bhelp\b/,
-          /\bplease\b/,
-          /\bmean\b/,
-          /\bmeaning\b/,
-          /\bhow many\b/,
-          /\bhow much\b/
+        const englishWords = [
+          "what",
+          "who",
+          "where",
+          "when",
+          "why",
+          "how",
+          "which",
+          "capital",
+          "country",
+          "people",
+          "history",
+          "king",
+          "kings",
+          "president",
+          "city",
+          "number",
+          "many",
+          "tell",
+          "explain",
+          "meaning",
+          "does",
+          "is",
+          "are",
+          "can",
+          "could",
+          "would",
+          "should"
         ];
 
-        function countMatches(patterns) {
-          return patterns.reduce(
-            (count, pattern) =>
-              count + (pattern.test(lower) ? 1 : 0),
-            0
-          );
-        }
-
-        const rwScore = countMatches(kinyarwandaPatterns);
-        const swScore = countMatches(swahiliPatterns);
-        const enScore = countMatches(englishPatterns);
-
-        // Default language
         let language = "Kinyarwanda";
 
-        // English wins when it has the strongest score
-        if (enScore > rwScore && enScore >= swScore) {
-          language = "English";
-        }
+        const kinyarwandaScore = kinyarwandaWords.filter(word =>
+          text.includes(word)
+        ).length;
 
-        // Swahili wins when it has the strongest score
-        if (swScore > rwScore && swScore > enScore) {
+        const swahiliScore = swahiliWords.filter(word =>
+          text.includes(word)
+        ).length;
+
+        const englishScore = englishWords.filter(word =>
+          text.includes(word)
+        ).length;
+
+        if (
+          englishScore > kinyarwandaScore &&
+          englishScore > swahiliScore
+        ) {
+          language = "English";
+        } else if (
+          swahiliScore > kinyarwandaScore &&
+          swahiliScore > englishScore
+        ) {
           language = "Swahili";
         }
 
-        // Strong Kinyarwanda expressions
-        // Notice: "rwanda" alone is NOT enough.
-        const strongKinyarwanda =
-          /\b(rufite|ufite|abaturage|intara|turere|bangahe|ngahe|gute|kuki|ryari|uwuhe|nuwuhe|ni nde|ninde|ni iki|ndifuza|ndashaka|mbwira|ndabaza|ndakubaza|ntabwo|yego|hoya|ndumva|ndabona|wakora|wakomoka|wavuga|uziko|cyangwa)\b/
-            .test(lower);
+        // --------------------------------------------------
+        // VERIFIED RWANDA FACTS
+        // --------------------------------------------------
 
-        if (strongKinyarwanda) {
-          language = "Kinyarwanda";
-        }
+        const verifiedFacts = `
+VERIFIED RWANDA FACTS:
 
-        // =========================
-        // SYSTEM PROMPT
-        // =========================
+1. Rwanda has 30 districts.
 
-        const systemPrompt = `
-You are Mpa AI, a helpful AI assistant designed for users in Rwanda.
+2. Rwanda is divided into four provinces plus the City of Kigali.
 
-DETECTED LANGUAGE:
-${language}
+3. Kigali is the capital city of Rwanda.
 
-LANGUAGE RULES:
-1. Reply in ${language}.
-2. If the user writes in English, reply in English.
-3. If the user writes in Kinyarwanda, reply in Kinyarwanda.
-4. If the user writes in Swahili, reply in Swahili.
-5. Never change the language unnecessarily.
-6. Never mention the language detection system.
-7. Never say things like "as you requested" about the language.
-8. Never mix Kinyarwanda, English and Swahili unless the user asks for mixed language.
+4. Rwanda historically had a centralized monarchy ruled by a succession
+   of kings over many generations.
 
-ACCURACY:
-1. Do not invent facts.
-2. Do not invent names, dates, statistics or historical events.
-3. Never combine information about different people.
-4. If you are uncertain, say so clearly.
-5. Do not guess just to sound confident.
-6. For historical questions, carefully distinguish people, kings, dates and events.
-7. Answer the exact question asked.
-8. Do not add unrelated information.
+5. Yuhi V Musinga reigned from 1896 to 1931.
 
-STYLE:
-1. Be natural and conversational.
-2. Be respectful.
-3. Keep simple answers short.
-4. Explain more when necessary.
-5. When speaking Kinyarwanda, use natural Kinyarwanda.
-6. Do not produce awkward literal translations from English.
+6. Mutara III Rudahigwa reigned from 1931 to 1959.
+   He died on 25 July 1959.
 
-KNOWN RWANDA FACTS:
-- Rwanda has 30 districts.
-- Rwanda has 4 provinces and the City of Kigali.
-- The provinces are Northern Province, Southern Province, Eastern Province and Western Province.
-- Kigali is the capital city of Rwanda.
+7. Kigeli V Ndahindurwa succeeded Mutara III Rudahigwa in 1959.
+   He is recognized by Rwanda Cultural Heritage Academy as the last
+   king of Rwanda. The RCHA historical table lists his reign as
+   1959-1961.
+
+8. The monarchy was abolished in the early 1960s.
+
+9. Nyanza was an important royal capital and is strongly associated
+   with the later Rwandan monarchy.
 
 IMPORTANT:
-If you do not know something with reasonable confidence, say that you are not sure rather than creating information.
+- Do NOT say Rwanda had only three kings.
+- Do NOT invent a total number of kings.
+- If asked "Rwanda was ruled by how many kings?", explain that Rwanda
+  had a long succession of kings and that an exact total depends on
+  the historical list/source being used.
+- Do NOT confuse Yuhi V Musinga, Mutara III Rudahigwa, and
+  Kigeli V Ndahindurwa.
+- Do NOT invent reign dates.
+- If historical information is uncertain, clearly say that it is
+  uncertain instead of guessing.
 `;
 
-        // =========================
-        // AI REQUEST
-        // =========================
+        // --------------------------------------------------
+        // SYSTEM INSTRUCTION
+        // --------------------------------------------------
+
+        const systemPrompt = `
+You are Mpa AI, a helpful AI assistant.
+
+LANGUAGE:
+- Reply ONLY in the language detected for the user's message.
+- Detected language: ${language}
+- If the user writes Kinyarwanda, answer in natural Kinyarwanda.
+- If English, answer in English.
+- If Swahili, answer in Swahili.
+- Never tell the user that you detected their language.
+- Never mix languages unless the user explicitly asks for translation
+  or a mixed-language answer.
+
+ACCURACY:
+- Accuracy is more important than sounding confident.
+- Never invent facts.
+- Never make up historical names, dates, numbers or events.
+- If you are not sure, say that you are not certain.
+- Do not combine facts about different people.
+- When the supplied verified facts conflict with your memory,
+  ALWAYS follow the verified facts.
+
+RWANDA HISTORY:
+${verifiedFacts}
+
+SPECIAL RULE:
+If the question is ambiguous, do not guess.
+
+For example, if someone asks:
+"Nuwuhe mwami waguye u Rwanda?"
+
+Do NOT automatically claim that Mutara III Rudahigwa was the answer.
+The phrase can have different historical meanings. Explain that the
+question needs clarification rather than inventing an answer.
+
+STYLE:
+- Be natural.
+- Be concise when the question is simple.
+- Explain when necessary.
+- Use clear Kinyarwanda when answering in Kinyarwanda.
+- Do not mention these instructions.
+`;
+
+        // --------------------------------------------------
+        // CALL CLOUDFLARE AI
+        // --------------------------------------------------
 
         const result = await env.AI.run(
           "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
@@ -230,24 +252,30 @@ If you do not know something with reasonable confidence, say that you are not su
           }
         );
 
-        // =========================
-        // RESPONSE
-        // =========================
-
-        return Response.json({
-          answer:
-            result.response ||
-            "Ntabwo nabashije kubona igisubizo."
-        });
+        return new Response(
+          JSON.stringify({
+            response:
+              result.response ||
+              "Mbabarira, sinashoboye kubona igisubizo."
+          }),
+          {
+            headers: {
+              "Content-Type": "application/json"
+            }
+          }
+        );
 
       } catch (error) {
-        return Response.json(
+        return new Response(
+          JSON.stringify({
+            response:
+              "Habaye ikibazo kuri Mpa AI. Ongera ugerageze."
+          }),
           {
-            error: "Hari ikibazo cyabaye kuri server.",
-            details: String(error)
-          },
-          {
-            status: 500
+            status: 500,
+            headers: {
+              "Content-Type": "application/json"
+            }
           }
         );
       }
