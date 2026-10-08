@@ -13,7 +13,7 @@ export default {
 
         if (!message) {
           return Response.json(
-            { error: String(error) }
+            { { error: String(error) }: String(error) }
             { status: 400 }
           );
         }
