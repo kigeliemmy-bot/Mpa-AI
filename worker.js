@@ -2,12 +2,10 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
-    // Serve the website
     if (request.method === "GET") {
       return env.ASSETS.fetch(request);
     }
 
-    // AI Chat API
     if (url.pathname === "/api/chat" && request.method === "POST") {
       try {
         const body = await request.json();
@@ -20,12 +18,9 @@ export default {
           );
         }
 
-        /*
-         * LANGUAGE DETECTION
-         * -----------------
-         * Kinyarwanda is the default because Mpa AI
-         * is designed primarily for Rwanda.
-         */
+        // =========================
+        // LANGUAGE DETECTION
+        // =========================
 
         const lower = message
           .toLowerCase()
@@ -33,57 +28,43 @@ export default {
           .replace(/[\u0300-\u036f]/g, "");
 
         const kinyarwandaPatterns = [
-          /\bni\b/,
-          /\biki\b/,
-          /\buwuhe\b/,
-          /\buwuhe\b/,
-          /\bangahe\b/,
+          /\burwanda\b/,
+          /\burwanda\b/,
+          /\brufite\b/,
+          /\bufite\b/,
+          /\babantu\b/,
+          /\babaturage\b/,
+          /\bintara\b/,
+          /\bturere\b/,
+          /\bbangahe\b/,
           /\bngahe\b/,
           /\bgute\b/,
           /\bkuki\b/,
-          /\bhe\b/,
-          /\bhehe\b/,
           /\bryari\b/,
-          /\bese\b/,
-          /\burwanda\b/,
-          /\brwanda\b/,
-          /\brufite\b/,
-          /\bufite\b/,
-          /\buri\b/,
-          /\buri hehe\b/,
+          /\buwuhe\b/,
+          /\bnuwuhe\b/,
+          /\bni nde\b/,
+          /\bninde\b/,
+          /\bni iki\b/,
           /\bndifuza\b/,
           /\bndashaka\b/,
           /\bmbwira\b/,
-          /\bumuntu\b/,
-          /\babantu\b/,
-          /\babaturage\b/,
-          /\bturere\b/,
-          /\bintara\b/,
           /\bndabaza\b/,
           /\bndakubaza\b/,
-          /\bwakora\b/,
-          /\bwakomoka\b/,
-          /\bni nde\b/,
-          /\bni iki\b/,
-          /\bni bangahe\b/,
-          /\bnuwuhe\b/,
-          /\bninde\b/,
-          /\bwakunze\b/,
-          /\bwakwita\b/,
-          /\bwavuga\b/,
-          /\buziko\b/,
-          /\bntabwo\b/,
-          /\byego\b/,
-          /\bhoya\b/,
-          /\bndabona\b/,
-          /\bndumva\b/,
-          /\bndifuza\b/,
-          /\bndashaka\b/,
-          /\bcyangwa\b/,
           /\bcyane\b/,
           /\bnone\b/,
           /\bubu\b/,
-          /\buyu munsi\b/
+          /\buyu munsi\b/,
+          /\bntabwo\b/,
+          /\byego\b/,
+          /\bhoya\b/,
+          /\bndumva\b/,
+          /\bndabona\b/,
+          /\bwakora\b/,
+          /\bwakomoka\b/,
+          /\bwavuga\b/,
+          /\buziko\b/,
+          /\bcyangwa\b/
         ];
 
         const swahiliPatterns = [
@@ -98,13 +79,10 @@ export default {
           /\bnchi\b/,
           /\bhii\b/,
           /\bhuyu\b/,
-          /\bambayo\b/,
           /\bnaweza\b/,
           /\bnataka\b/,
           /\btafadhali\b/,
           /\bhabari\b/,
-          /\bmaana\b/,
-          /\bkwa\b/,
           /\byangu\b/,
           /\byako\b/,
           /\byetu\b/,
@@ -119,6 +97,8 @@ export default {
           /\bwhy\b/,
           /\bhow\b/,
           /\bwhich\b/,
+          /\bwhat's\b/,
+          /\bwhats\b/,
           /\bis\b/,
           /\bare\b/,
           /\bthe\b/,
@@ -139,11 +119,12 @@ export default {
           /\bprovince\b/,
           /\bking\b/,
           /\bqueen\b/,
-          /\bwhen\b/,
           /\bhelp\b/,
           /\bplease\b/,
           /\bmean\b/,
-          /\bmeaning\b/
+          /\bmeaning\b/,
+          /\bhow many\b/,
+          /\bhow much\b/
         ];
 
         function countMatches(patterns) {
@@ -158,75 +139,80 @@ export default {
         const swScore = countMatches(swahiliPatterns);
         const enScore = countMatches(englishPatterns);
 
-        // Kinyarwanda is the default language
+        // Default language
         let language = "Kinyarwanda";
 
-        if (enScore > rwScore && enScore > swScore) {
+        // English wins when it has the strongest score
+        if (enScore > rwScore && enScore >= swScore) {
           language = "English";
-        } else if (swScore > rwScore && swScore > enScore) {
+        }
+
+        // Swahili wins when it has the strongest score
+        if (swScore > rwScore && swScore > enScore) {
           language = "Swahili";
         }
 
-        /*
-         * STRONG KINYARWANDA PROTECTION
-         * --------------------------------
-         * These words should strongly indicate Kinyarwanda,
-         * even when the question is short.
-         */
-
+        // Strong Kinyarwanda expressions
+        // Notice: "rwanda" alone is NOT enough.
         const strongKinyarwanda =
-          /\b(urwanda|rwanda|rwo|rwa|rwe|ruri|rufite|ufite|abantu|abaturage|intara|turere|bangahe|ngahe|gute|kuki|ryari|uwuhe|nuwuhe|ni nde|ninde|ni iki|ndifuza|ndashaka|mbwira|ndabaza|ndakubaza|cyane|none|ubu|uyu munsi)\b/
+          /\b(rufite|ufite|abaturage|intara|turere|bangahe|ngahe|gute|kuki|ryari|uwuhe|nuwuhe|ni nde|ninde|ni iki|ndifuza|ndashaka|mbwira|ndabaza|ndakubaza|ntabwo|yego|hoya|ndumva|ndabona|wakora|wakomoka|wavuga|uziko|cyangwa)\b/
             .test(lower);
 
         if (strongKinyarwanda) {
           language = "Kinyarwanda";
         }
 
-        /*
-         * AI SYSTEM INSTRUCTIONS
-         */
+        // =========================
+        // SYSTEM PROMPT
+        // =========================
 
         const systemPrompt = `
-You are Mpa AI, a helpful AI assistant made for users in Rwanda.
+You are Mpa AI, a helpful AI assistant designed for users in Rwanda.
 
-The detected language is: ${language}
+DETECTED LANGUAGE:
+${language}
 
 LANGUAGE RULES:
-- Reply ONLY in ${language}.
-- Never switch to another language unless the user asks you to translate.
-- If the language is Kinyarwanda, use natural and understandable Kinyarwanda.
-- If the language is English, answer entirely in English.
-- If the language is Swahili, answer entirely in Swahili.
-- Do not translate the user's question before answering it.
+1. Reply in ${language}.
+2. If the user writes in English, reply in English.
+3. If the user writes in Kinyarwanda, reply in Kinyarwanda.
+4. If the user writes in Swahili, reply in Swahili.
+5. Never change the language unnecessarily.
+6. Never mention the language detection system.
+7. Never say things like "as you requested" about the language.
+8. Never mix Kinyarwanda, English and Swahili unless the user asks for mixed language.
 
-ACCURACY RULES:
-- Give the most accurate answer you can.
-- Never invent names, dates, numbers, events, quotations, or historical facts.
-- Never combine facts about different people or historical events.
-- If you are not confident about a fact, clearly say that you are not sure.
-- Do not make up an answer just to sound confident.
-- For historical questions, carefully distinguish between people, kings, dates, and events.
-- If a question is ambiguous, explain what is unclear instead of guessing.
-- Answer the exact question the user asked.
-- Do not add unrelated information.
+ACCURACY:
+1. Do not invent facts.
+2. Do not invent names, dates, statistics or historical events.
+3. Never combine information about different people.
+4. If you are uncertain, say so clearly.
+5. Do not guess just to sound confident.
+6. For historical questions, carefully distinguish people, kings, dates and events.
+7. Answer the exact question asked.
+8. Do not add unrelated information.
 
-RWANDA FACTS:
+STYLE:
+1. Be natural and conversational.
+2. Be respectful.
+3. Keep simple answers short.
+4. Explain more when necessary.
+5. When speaking Kinyarwanda, use natural Kinyarwanda.
+6. Do not produce awkward literal translations from English.
+
+KNOWN RWANDA FACTS:
 - Rwanda has 30 districts.
 - Rwanda has 4 provinces and the City of Kigali.
-- The four provinces are Northern Province, Southern Province, Eastern Province, and Western Province.
+- The provinces are Northern Province, Southern Province, Eastern Province and Western Province.
 - Kigali is the capital city of Rwanda.
 
-RESPONSE STYLE:
-- Be helpful and respectful.
-- Keep simple questions concise.
-- Give more explanation when the question requires it.
-- Use natural Kinyarwanda when responding in Kinyarwanda.
-- Do not use unnecessary English words in Kinyarwanda answers.
+IMPORTANT:
+If you do not know something with reasonable confidence, say that you are not sure rather than creating information.
 `;
 
-        /*
-         * SEND REQUEST TO CLOUDFLARE WORKERS AI
-         */
+        // =========================
+        // AI REQUEST
+        // =========================
 
         const result = await env.AI.run(
           "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
@@ -244,9 +230,9 @@ RESPONSE STYLE:
           }
         );
 
-        /*
-         * RETURN AI RESPONSE
-         */
+        // =========================
+        // RESPONSE
+        // =========================
 
         return Response.json({
           answer:
@@ -257,7 +243,8 @@ RESPONSE STYLE:
       } catch (error) {
         return Response.json(
           {
-            error: String(error)
+            error: "Hari ikibazo cyabaye kuri server.",
+            details: String(error)
           },
           {
             status: 500
