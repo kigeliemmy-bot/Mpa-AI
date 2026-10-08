@@ -13,15 +13,16 @@ export default {
 
         if (!message) {
           return Response.json(
-            { { error: String(error) }: String(error) }
+            { error: "Andika ikibazo mbere." },
             { status: 400 }
           );
         }
 
         const result = await env.AI.run(
           "@cf/meta/llama-3.1-8b-instruct-fast",
-{
-  messages: [
+          {
+            messages: [
+              {
                 role: "system",
                 content:
                   "Uri Mpa AI. Subiza neza kandi mu buryo bworoshye. Niba umuntu abajije mu Kinyarwanda, subiza mu Kinyarwanda. Niba abajije mu English, subiza mu English."
@@ -39,7 +40,7 @@ export default {
         });
       } catch (error) {
         return Response.json(
-          { error: "Habaye ikibazo kuri Mpa AI." },
+          { error: String(error) },
           { status: 500 }
         );
       }
