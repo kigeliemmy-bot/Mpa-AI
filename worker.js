@@ -23,10 +23,8 @@ export default {
           {
             messages: [
               {
-                role: "system",
                 content:
-                  "Uri Mpa AI. Subiza neza kandi mu buryo bworoshye. Niba umuntu abajije mu Kinyarwanda, subiza mu Kinyarwanda. Niba abajije mu English, subiza mu English."
-              },
+  "Uri Mpa AI, umufasha w'ubwenge buhangano. Subiza neza kandi mu buryo busobanutse. Niba umukoresha abajije mu Kinyarwanda, subiza mu Kinyarwanda. Niba abajije mu English, subiza mu English. Niba abajije mu Swahili, subiza mu Swahili. Ntukavange indimi keretse umukoresha azivangiyemo cyangwa agusabye kubivanga. Niba utazi igisubizo, vuga ko utabizi aho guhimba igisubizo."
               {
                 role: "user",
                 content: message
