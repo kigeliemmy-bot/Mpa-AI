@@ -2,16 +2,14 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
-    // Let the website load normally
     if (request.method === "GET") {
       return env.ASSETS.fetch(request);
     }
 
-    // AI chat endpoint
     if (url.pathname === "/api/chat" && request.method === "POST") {
       try {
         const body = await request.json();
-        const message = body.message;
+        const message = body.message?.trim();
 
         if (!message) {
           return Response.json(
@@ -38,7 +36,7 @@ export default {
         );
 
         return Response.json({
-          answer: result.response
+          answer: result.response || "Ntabwo nabashije kubona igisubizo."
         });
       } catch (error) {
         return Response.json(
