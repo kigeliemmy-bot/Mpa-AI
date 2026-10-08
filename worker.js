@@ -1,9 +1,24 @@
 export default {
   async fetch(request, env) {
-    if (request.method === "POST") {
+    const url = new URL(request.url);
+
+    // Let the website load normally
+    if (request.method === "GET") {
+      return env.ASSETS.fetch(request);
+    }
+
+    // AI chat endpoint
+    if (url.pathname === "/api/chat" && request.method === "POST") {
       try {
         const body = await request.json();
         const message = body.message;
+
+        if (!message) {
+          return Response.json(
+            { error: "Andika ikibazo mbere." },
+            { status: 400 }
+          );
+        }
 
         const result = await env.AI.run(
           "@cf/meta/llama-3.1-8b-instruct",
@@ -12,7 +27,7 @@ export default {
               {
                 role: "system",
                 content:
-                  "Uri Mpa AI. Subiza neza. Niba umuntu akubajije mu Kinyarwanda, subiza mu Kinyarwanda. Niba akubajije mu English, subiza mu English."
+                  "Uri Mpa AI. Subiza neza kandi mu buryo bworoshye. Niba umuntu abajije mu Kinyarwanda, subiza mu Kinyarwanda. Niba abajije mu English, subiza mu English."
               },
               {
                 role: "user",
@@ -22,29 +37,17 @@ export default {
           }
         );
 
-        return new Response(
-          JSON.stringify({ answer: result.response }),
-          {
-            headers: {
-              "Content-Type": "application/json",
-              "Access-Control-Allow-Origin": "*"
-            }
-          }
-        );
+        return Response.json({
+          answer: result.response
+        });
       } catch (error) {
-        return new Response(
-          JSON.stringify({ error: error.message }),
-          {
-            status: 500,
-            headers: {
-              "Content-Type": "application/json",
-              "Access-Control-Allow-Origin": "*"
-            }
-          }
+        return Response.json(
+          { error: "Habaye ikibazo kuri Mpa AI." },
+          { status: 500 }
         );
       }
     }
 
-    return new Response("Mpa AI is running.");
+    return new Response("Not found", { status: 404 });
   }
 };
