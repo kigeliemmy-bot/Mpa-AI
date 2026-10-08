@@ -19,48 +19,110 @@ export default {
         }
 
         // Detect the language before sending the message to AI
-        const lower = message.toLowerCase();
+const lower = message.toLowerCase().trim();
 
-        const kinyarwandaWords = [
-          "ni", "iki", "uwuhe", "iki", "angahe", "gute",
-          "kuki", "he", "ryari", "u Rwanda", "ndifuza",
-          "ndashaka", "mbwira", "ese", "urwanda", "umuntu",
-          "abantu", "turere", "intara"
-        ];
+const kinyarwandaPatterns = [
+  /\bni\b/,
+  /\biki\b/,
+  /\buwuhe\b/,
+  /\buwuhe\b/,
+  /\bangahe\b/,
+  /\bgute\b/,
+  /\bkuki\b/,
+  /\bhe\b/,
+  /\bryari\b/,
+  /\bese\b/,
+  /\burwanda\b/,
+  /\bndifuza\b/,
+  /\bndashaka\b/,
+  /\bmbwira\b/,
+  /\bumuntu\b/,
+  /\babantu\b/,
+  /\bturere\b/,
+  /\bintara\b/,
+  /\babaturage\b/,
+  /\bnabantu\b/,
+  /\bngahe\b/,
+  /\bikihe\b/,
+  /\buri\b/,
+  /\bufite\b/,
+  /\brufite\b/,
+  /\bndashaka\b/,
+  /\bndabaza\b/,
+  /\bndakubaza\b/,
+  /\bwakora\b/,
+  /\bwakomoka\b/,
+  /\buri hehe\b/,
+  /\bni nde\b/,
+  /\bni iki\b/,
+  /\bni bangahe\b/
+];
 
-        const swahiliWords = [
-          "nini", "nani", "wapi", "lini", "kwa nini",
-          "vipi", "ni ngapi", "mji", "nchi", "hii",
-          "huyu", "ambayo", "naweza", "nataka", "tafadhali"
-        ];
+const swahiliPatterns = [
+  /\bnini\b/,
+  /\bnani\b/,
+  /\bwapi\b/,
+  /\blini\b/,
+  /\bkwa nini\b/,
+  /\bvipi\b/,
+  /\bngapi\b/,
+  /\bmji\b/,
+  /\bnchi\b/,
+  /\bhii\b/,
+  /\bhuyu\b/,
+  /\bnaweza\b/,
+  /\bnataka\b/,
+  /\btafadhali\b/
+];
 
-        const englishWords = [
-          "what", "who", "where", "when", "why", "how",
-          "which", "is", "are", "the", "a", "an",
-          "can", "could", "would", "should", "tell",
-          "give", "explain", "capital", "country"
-        ];
+const englishPatterns = [
+  /\bwhat\b/,
+  /\bwho\b/,
+  /\bwhere\b/,
+  /\bwhen\b/,
+  /\bwhy\b/,
+  /\bhow\b/,
+  /\bwhich\b/,
+  /\bis\b/,
+  /\bare\b/,
+  /\bthe\b/,
+  /\bcan\b/,
+  /\bcould\b/,
+  /\bwould\b/,
+  /\bshould\b/,
+  /\btell\b/,
+  /\bgive\b/,
+  /\bexplain\b/,
+  /\bcapital\b/,
+  /\bcountry\b/
+];
 
-        const countMatches = (words) =>
-          words.reduce(
-            (count, word) =>
-              count + (lower.includes(word.toLowerCase()) ? 1 : 0),
-            0
-          );
+const countPatterns = (patterns) =>
+  patterns.reduce(
+    (count, pattern) => count + (pattern.test(lower) ? 1 : 0),
+    0
+  );
 
-        const rwScore = countMatches(kinyarwandaWords);
-        const swScore = countMatches(swahiliWords);
-        const enScore = countMatches(englishWords);
+const rwScore = countPatterns(kinyarwandaPatterns);
+const swScore = countPatterns(swahiliPatterns);
+const enScore = countPatterns(englishPatterns);
 
-        let language = "Kinyarwanda";
+// Kinyarwanda is the default language.
+// This is important for short Rwanda/Kinyarwanda questions.
+let language = "Kinyarwanda";
 
-        if (enScore > rwScore && enScore > swScore) {
-          language = "English";
-        } else if (swScore > rwScore && swScore > enScore) {
-          language = "Swahili";
-        }
+if (enScore > rwScore && enScore > swScore) {
+  language = "English";
+} else if (swScore > rwScore && swScore > enScore) {
+  language = "Swahili";
+}
 
-        const result = await env.AI.run(
+// Extra protection for common Kinyarwanda sentence patterns
+if (
+  /\b(urwanda|rwanda|rwa|rwo|rwe|ruri|rufite|ufite|abantu|abaturage|intara|turere|bangahe|ngahe|gute|kuki|ryari|uwuhe|ni nde|ni iki)\b/.test(lower)
+) {
+  language = "Kinyarwanda";
+}
           "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
           {
             messages: [
