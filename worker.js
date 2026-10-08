@@ -18,9 +18,7 @@ export default {
           );
         }
 
-        const result = await env.AI.run(
-          "@cf/meta/llama-3.1-8b-instruct-fast",
-          {
+        "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
             messages: [
               {
                 content:
