@@ -126,30 +126,52 @@
   </div>
 
   <script>
-    function sendMessage() {
-      const input = document.getElementById("question");
-      const chat = document.getElementById("chat");
-      const question = input.value.trim();
+    
+async function sendMessage() {
+  const input = document.getElementById("question");
+  const chat = document.getElementById("chat");
+  const question = input.value.trim();
 
-      if (!question) return;
+  if (!question) return;
 
-      const userMessage = document.createElement("div");
-      userMessage.className = "message";
-      userMessage.innerHTML = "<strong>Wowe:</strong><br>" + question;
+  const userMessage = document.createElement("div");
+  userMessage.className = "message";
+  userMessage.textContent = "Wowe: " + question;
+  chat.appendChild(userMessage);
 
-      chat.appendChild(userMessage);
+  const aiMessage = document.createElement("div");
+  aiMessage.className = "message";
+  aiMessage.textContent = "Mpa AI: Ndimo gutekereza...";
+  chat.appendChild(aiMessage);
 
-      const aiMessage = document.createElement("div");
-      aiMessage.className = "message";
-      aiMessage.innerHTML =
-        "<strong>Mpa AI:</strong><br>" +
-        "Ndakumva. Mpa akanya gato, turimo gutegura AI izajya igusubiza neza.";
+  input.value = "";
 
-      chat.appendChild(aiMessage);
+  try {
+    const response = await fetch("/api/chat", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        message: question
+      })
+    });
 
-      input.value = "";
-      window.scrollTo(0, document.body.scrollHeight);
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Habaye ikibazo.");
     }
+
+    aiMessage.textContent = "Mpa AI: " + data.answer;
+  } catch (error) {
+    aiMessage.textContent =
+      "Mpa AI: Habaye ikibazo. Ongera ugerageze.";
+  }
+
+  window.scrollTo(0, document.body.scrollHeight);
+    }
+      
   </script>
 
 </body>
