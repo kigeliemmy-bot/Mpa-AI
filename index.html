@@ -17,7 +17,7 @@
     body {
       font-family: Arial, sans-serif;
       background: #0b0f19;
-      color: #ffffff;
+      color: white;
       min-height: 100vh;
     }
 
@@ -25,10 +25,10 @@
       position: sticky;
       top: 0;
       z-index: 10;
-      background: rgba(11, 15, 25, 0.95);
+      background: rgba(11, 15, 25, 0.96);
       backdrop-filter: blur(12px);
       border-bottom: 1px solid #252b3a;
-      padding: 15px;
+      padding: 14px 15px;
     }
 
     .header-inner {
@@ -66,7 +66,12 @@
       margin-top: 3px;
     }
 
-    .new-chat {
+    .header-buttons {
+      display: flex;
+      gap: 8px;
+    }
+
+    .header-button {
       background: #151b28;
       border: 1px solid #30384a;
       color: white;
@@ -76,7 +81,7 @@
       font-size: 13px;
     }
 
-    .new-chat:hover {
+    .header-button:hover {
       background: #20283a;
     }
 
@@ -247,18 +252,10 @@
       color: white;
       cursor: pointer;
       font-size: 19px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .send-button:hover {
-      opacity: 0.9;
     }
 
     .send-button:disabled {
       opacity: 0.5;
-      cursor: not-allowed;
     }
 
     .hint {
@@ -269,17 +266,91 @@
       font-size: 11px;
     }
 
+    /* History */
+
+    .history-panel {
+      position: fixed;
+      top: 0;
+      left: -310px;
+      width: 290px;
+      height: 100vh;
+      background: #101522;
+      border-right: 1px solid #252b3a;
+      z-index: 50;
+      transition: left 0.25s ease;
+      padding: 18px;
+      overflow-y: auto;
+    }
+
+    .history-panel.open {
+      left: 0;
+    }
+
+    .history-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+
+    .history-title h2 {
+      font-size: 19px;
+    }
+
+    .close-history {
+      background: transparent;
+      color: white;
+      border: none;
+      font-size: 22px;
+      cursor: pointer;
+    }
+
+    .history-new {
+      width: 100%;
+      padding: 11px;
+      border: 1px solid #30384a;
+      background: #151b28;
+      color: white;
+      border-radius: 10px;
+      cursor: pointer;
+      margin-bottom: 15px;
+    }
+
+    .history-item {
+      width: 100%;
+      text-align: left;
+      padding: 12px;
+      margin-bottom: 8px;
+      border: 1px solid transparent;
+      background: #151b28;
+      color: white;
+      border-radius: 10px;
+      cursor: pointer;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    .history-item:hover {
+      border-color: #30384a;
+    }
+
+    .overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      z-index: 40;
+    }
+
+    .overlay.show {
+      display: block;
+    }
+
     @media (max-width: 600px) {
+
       .brand-text h1 {
         font-size: 17px;
-      }
-
-      .welcome {
-        padding-top: 55px;
-      }
-
-      .welcome h2 {
-        font-size: 25px;
       }
 
       .message {
@@ -291,8 +362,8 @@
         padding-right: 10px;
       }
 
-      .new-chat {
-        padding: 8px 10px;
+      .history-panel {
+        width: 280px;
       }
     }
   </style>
@@ -300,23 +371,64 @@
 
 <body>
 
+  <div class="overlay" id="overlay" onclick="closeHistory()"></div>
+
+  <aside class="history-panel" id="historyPanel">
+
+    <div class="history-title">
+      <h2>💬 Chat History</h2>
+
+      <button class="close-history" onclick="closeHistory()">
+        ×
+      </button>
+    </div>
+
+    <button class="history-new" onclick="newChat()">
+      + New Chat
+    </button>
+
+    <div id="historyList"></div>
+
+  </aside>
+
+
   <header>
+
     <div class="header-inner">
 
       <div class="brand">
-        <div class="logo">🤖</div>
+
+        <div class="logo">
+          🤖
+        </div>
 
         <div class="brand-text">
           <h1>Mpa AI</h1>
           <p>AI yawe • Kinyarwanda • English • Swahili</p>
         </div>
+
       </div>
 
-      <button class="new-chat" onclick="newChat()">
-        + New Chat
-      </button>
+      <div class="header-buttons">
+
+        <button
+          class="header-button"
+          onclick="openHistory()"
+        >
+          ☰
+        </button>
+
+        <button
+          class="header-button"
+          onclick="newChat()"
+        >
+          + New Chat
+        </button>
+
+      </div>
 
     </div>
+
   </header>
 
 
@@ -354,7 +466,6 @@
       <button
         class="send-button"
         id="sendButton"
-        type="button"
         onclick="sendMessage()"
       >
         ↑
@@ -375,11 +486,30 @@
     const chat = document.getElementById("chat");
     const sendButton = document.getElementById("sendButton");
 
+    let currentChat = [];
+
+    let chatHistory =
+      JSON.parse(localStorage.getItem("mpaAIHistory") || "[]");
+
+
+    function saveHistory() {
+
+      localStorage.setItem(
+        "mpaAIHistory",
+        JSON.stringify(chatHistory)
+      );
+
+    }
+
+
     function handleKeyDown(event) {
 
       if (event.key === "Enter" && !event.shiftKey) {
+
         event.preventDefault();
+
         sendMessage();
+
       }
 
     }
@@ -388,17 +518,24 @@
     function addMessage(type, text) {
 
       const row = document.createElement("div");
+
       row.className = "message-row " + type;
 
       const avatar = document.createElement("div");
+
       avatar.className = "avatar";
-      avatar.textContent = type === "user" ? "👤" : "🤖";
+
+      avatar.textContent =
+        type === "user" ? "👤" : "🤖";
 
       const message = document.createElement("div");
+
       message.className = "message";
+
       message.textContent = text;
 
       row.appendChild(avatar);
+
       row.appendChild(message);
 
       chat.appendChild(row);
@@ -409,20 +546,26 @@
       });
 
       return message;
+
     }
 
 
     function addTyping() {
 
       const row = document.createElement("div");
+
       row.className = "message-row ai";
+
       row.id = "typing-message";
 
       const avatar = document.createElement("div");
+
       avatar.className = "avatar";
+
       avatar.textContent = "🤖";
 
       const message = document.createElement("div");
+
       message.className = "message";
 
       message.innerHTML = `
@@ -434,20 +577,18 @@
       `;
 
       row.appendChild(avatar);
+
       row.appendChild(message);
 
       chat.appendChild(row);
 
-      window.scrollTo({
-        top: document.body.scrollHeight,
-        behavior: "smooth"
-      });
     }
 
 
     function removeTyping() {
 
-      const typing = document.getElementById("typing-message");
+      const typing =
+        document.getElementById("typing-message");
 
       if (typing) {
         typing.remove();
@@ -464,7 +605,8 @@
         return;
       }
 
-      const welcome = document.getElementById("welcome");
+      const welcome =
+        document.getElementById("welcome");
 
       if (welcome) {
         welcome.remove();
@@ -472,7 +614,13 @@
 
       addMessage("user", question);
 
+      currentChat.push({
+        role: "user",
+        content: question
+      });
+
       input.value = "";
+
       input.style.height = "auto";
 
       sendButton.disabled = true;
@@ -482,6 +630,7 @@
       try {
 
         const response = await fetch("/api/chat", {
+
           method: "POST",
 
           headers: {
@@ -491,6 +640,7 @@
           body: JSON.stringify({
             message: question
           })
+
         });
 
 
@@ -498,18 +648,32 @@
 
 
         if (!response.ok) {
+
           throw new Error(
             data.error || "Habaye ikibazo."
           );
+
         }
 
 
         removeTyping();
 
-        addMessage(
-          "ai",
-          data.answer || "Ntabwo nabashije kubona igisubizo."
-        );
+
+        const answer =
+          data.answer ||
+          "Ntabwo nabashije kubona igisubizo.";
+
+
+        addMessage("ai", answer);
+
+
+        currentChat.push({
+          role: "assistant",
+          content: answer
+        });
+
+
+        saveCurrentChat();
 
 
       } catch (error) {
@@ -527,6 +691,152 @@
       sendButton.disabled = false;
 
       input.focus();
+
+    }
+
+
+    function saveCurrentChat() {
+
+      if (currentChat.length === 0) {
+        return;
+      }
+
+
+      const firstMessage =
+        currentChat.find(
+          message => message.role === "user"
+        );
+
+
+      const title =
+        firstMessage
+          ? firstMessage.content.substring(0, 35)
+          : "New Chat";
+
+
+      const existingIndex =
+        chatHistory.findIndex(
+          chat => chat.id === currentChat.id
+        );
+
+
+      const chatObject = {
+        id: currentChat.id,
+        title: title,
+        messages: currentChat.messages
+      };
+
+
+      if (existingIndex !== -1) {
+
+        chatHistory[existingIndex] =
+          chatObject;
+
+      } else {
+
+        chatHistory.unshift(chatObject);
+
+      }
+
+
+      saveHistory();
+
+      renderHistory();
+
+    }
+
+
+    function openHistory() {
+
+      document
+        .getElementById("historyPanel")
+        .classList.add("open");
+
+      document
+        .getElementById("overlay")
+        .classList.add("show");
+
+      renderHistory();
+
+    }
+
+
+    function closeHistory() {
+
+      document
+        .getElementById("historyPanel")
+        .classList.remove("open");
+
+      document
+        .getElementById("overlay")
+        .classList.remove("show");
+
+    }
+
+
+    function renderHistory() {
+
+      const list =
+        document.getElementById("historyList");
+
+      list.innerHTML = "";
+
+
+      if (chatHistory.length === 0) {
+
+        list.innerHTML =
+          `<p style="color:#6b7280;font-size:13px;text-align:center;">
+            Nta biganiro birabikwa.
+          </p>`;
+
+        return;
+
+      }
+
+
+      chatHistory.forEach((savedChat) => {
+
+        const button =
+          document.createElement("button");
+
+        button.className = "history-item";
+
+        button.textContent =
+          savedChat.title;
+
+
+        button.onclick = () => {
+
+          loadChat(savedChat);
+
+          closeHistory();
+
+        };
+
+
+        list.appendChild(button);
+
+      });
+
+    }
+
+
+    function loadChat(savedChat) {
+
+      chat.innerHTML = "";
+
+      currentChat = savedChat.messages || [];
+
+      currentChat.forEach(message => {
+
+        addMessage(
+          message.role === "user"
+            ? "user"
+            : "ai",
+          message.content
+        );
+
+      });
 
     }
 
@@ -550,8 +860,14 @@
         </div>
       `;
 
+
+      currentChat = [];
+
       input.value = "";
+
       input.focus();
+
+      closeHistory();
 
       window.scrollTo({
         top: 0,
@@ -561,14 +877,23 @@
     }
 
 
-    input.addEventListener("input", function () {
+    input.addEventListener(
+      "input",
+      function () {
 
-      this.style.height = "auto";
+        this.style.height = "auto";
 
-      this.style.height =
-        Math.min(this.scrollHeight, 130) + "px";
+        this.style.height =
+          Math.min(
+            this.scrollHeight,
+            130
+          ) + "px";
 
-    });
+      }
+    );
+
+
+    renderHistory();
 
   </script>
 
