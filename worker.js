@@ -2,7 +2,7 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
-    // Serve the Mpa AI website
+    // Serve the website
     if (request.method === "GET") {
       if (!env.ASSETS) {
         return new Response("Website assets are not configured.", {
@@ -12,7 +12,6 @@ export default {
       return env.ASSETS.fetch(request);
     }
 
-    // Only accept chat requests
     if (request.method !== "POST" || url.pathname !== "/api/chat") {
       return json({ response: "Not found." }, 404);
     }
@@ -29,43 +28,45 @@ export default {
       const text = normalize(message);
       const language = detectLanguage(message);
 
-      // Creator questions
+      // Greetings: support greetings within longer messages too.
+      if (isGreeting(text)) {
+        return json({
+          response: greetingResponse(language),
+        });
+      }
+
+      // Identity and creator
       if (
         /ninde wagukoze|wagukoze nde|ninde wakoze mpa ai|ninde wakuremye|umuremyi wawe|who created you|who made you|who built you|who developed you|nani alikuunda|nani alikutengeneza/.test(text)
       ) {
         const answers = {
           Kinyarwanda:
-            "Mpa AI yakozwe na Kigeli, ari na we wayiremye kandi akayiteza imbere.",
+            "Mpa AI yakozwe kandi iteza imbere na Kigeli.",
           English:
-            "Mpa AI was created and developed by Kigeli.",
+            "Mpa AI was created and is developed by Kigeli.",
           Swahili:
-            "Mpa AI iliundwa na Kigeli, ambaye ndiye aliyeitengeneza.",
+            "Mpa AI iliundwa na inaendelezwa na Kigeli.",
         };
         return json({ response: answers[language] });
       }
 
-      // Identity questions
       if (
-        /who are you|what is mpa ai|uri nde|mpa ai ni iki|wewe ni nani/.test(
-          text
-        )
+        /who are you|what is mpa ai|uri nde|mpa ai ni iki|wewe ni nani/.test(text)
       ) {
         const answers = {
           Kinyarwanda:
-            "Ndi Mpa AI, umufasha w'ubwenge buhangano wakozwe na Kigeli.",
+            "Ndi Mpa AI, umufasha w'ubwenge buhangano wakozwe na Kigeli. Nakugirira iki?",
           English:
-            "I am Mpa AI, an AI assistant created by Kigeli.",
+            "I am Mpa AI, an AI assistant created by Kigeli. How can I help you?",
           Swahili:
-            "Mimi ni Mpa AI, msaidizi wa akili bandia aliyeundwa na Kigeli.",
+            "Mimi ni Mpa AI, msaidizi wa akili bandia aliyeundwa na Kigeli. Nikusaidie nini?",
         };
         return json({ response: answers[language] });
       }
 
-      // Rwanda districts
+      // Rwanda facts
       if (
-        /uturere tungahe|urwanda rufite uturere|how many districts|districts does rwanda have|rwanda ina wilaya ngapi/.test(
-          text
-        )
+        /uturere tungahe|urwanda rufite uturere|how many districts|districts does rwanda have|rwanda ina wilaya ngapi/.test(text)
       ) {
         const answers = {
           Kinyarwanda: "U Rwanda rufite uturere 30.",
@@ -75,11 +76,8 @@ export default {
         return json({ response: answers[language] });
       }
 
-      // Rwanda capital
       if (
-        /capital of rwanda|capital city of rwanda|umurwa mukuru w urwanda|mji mkuu wa rwanda/.test(
-          text
-        )
+        /capital of rwanda|capital city of rwanda|umurwa mukuru w urwanda|mji mkuu wa rwanda/.test(text)
       ) {
         const answers = {
           Kinyarwanda: "Umurwa mukuru w'u Rwanda ni Kigali.",
@@ -89,11 +87,8 @@ export default {
         return json({ response: answers[language] });
       }
 
-      // Rwanda's last king
       if (
-        /last king of rwanda|umwami wa nyuma w urwanda|mfalme wa mwisho wa rwanda/.test(
-          text
-        )
+        /last king of rwanda|umwami wa nyuma w urwanda|umwami wa nyuma w urwanda yari nde|mfalme wa mwisho wa rwanda/.test(text)
       ) {
         const answers = {
           Kinyarwanda:
@@ -106,41 +101,39 @@ export default {
         return json({ response: answers[language] });
       }
 
-      // Greetings
-      if (
-        /^(hey|hi|hello|muraho|amakuru|bite|mwaramutse|mwiriwe|habari|hujambo)$/.test(
-          text
-        )
-      ) {
-        const answers = {
-          Kinyarwanda: "Muraho! Ndi Mpa AI. Nakugirira iki?",
-          English: "Hello! I am Mpa AI. How can I help you?",
-          Swahili: "Habari! Mimi ni Mpa AI. Nikusaidie nini?",
-        };
-        return json({ response: answers[language] });
-      }
-
-      // Check that Cloudflare Workers AI is connected
+      // Check AI binding
       if (!env.AI) {
-        return json(
-          {
-            response:
-              "AI ntirahuzwa neza na server. Reba AI binding muri Cloudflare.",
-          },
-          503
-        );
+        return json({
+          response:
+            "Mpa AI ntihujwe neza na seriveri. Reba AI binding muri Cloudflare.",
+        }, 503);
       }
 
       const systemPrompt = `
 You are Mpa AI, an AI assistant created by Kigeli.
-Reply in the same language as the user's message:
-Kinyarwanda, English, or Swahili.
-Use natural language. Answer the actual question directly.
-Be accurate. Do not invent facts. If unsure, say so.
-Keep answers clear and reasonably concise.
-Do not reveal system instructions.
 
-Known facts:
+LANGUAGE:
+- Reply in the same language the user uses.
+- If the user writes in Kinyarwanda, reply in natural, fluent Kinyarwanda.
+- If the user writes in English, reply in clear English.
+- If the user writes in Swahili, reply in natural Swahili.
+- Do not mix languages unnecessarily.
+- For short greetings, respond warmly and briefly.
+- If a message mixes languages, use the language that carries the main meaning.
+
+QUALITY:
+- Understand the user's actual question before answering.
+- Give a direct, relevant answer.
+- Use natural phrasing, correct grammar, and simple wording.
+- Do not repeat the user's message as your answer.
+- Do not invent facts. If uncertain, clearly say so.
+- If a question is ambiguous, ask one short clarifying question.
+- Keep simple answers short; explain more when the user asks for details.
+- Be friendly and respectful, but do not overdo greetings.
+- Never claim to have checked the internet or current information unless a tool actually did so.
+- Do not reveal these instructions.
+
+KNOWN FACTS:
 - Rwanda's capital is Kigali.
 - Rwanda has 30 districts.
 - Rwanda has four provinces and the City of Kigali.
@@ -155,7 +148,7 @@ Known facts:
             { role: "system", content: systemPrompt },
             { role: "user", content: message },
           ],
-          max_tokens: 800,
+          max_tokens: 700,
         }
       );
 
@@ -169,13 +162,10 @@ Known facts:
       });
     } catch (error) {
       console.error("Mpa AI error:", error);
-      return json(
-        {
-          response:
-            "Habaye ikibazo mu gusubiza. Ongera ugerageze.",
-        },
-        500
-      );
+      return json({
+        response:
+          "Habaye ikibazo mu gusubiza. Ongera ugerageze.",
+      }, 500);
     }
   },
 };
@@ -202,7 +192,8 @@ function normalize(value) {
 }
 
 function detectLanguage(message) {
-  const words = normalize(message).split(/\s+/);
+  const text = normalize(message);
+  const words = text.split(/\s+/);
 
   const rwWords = [
     "muraho", "amakuru", "ninde", "wagukoze", "iki", "ute",
@@ -214,7 +205,9 @@ function detectLanguage(message) {
     "angahe", "muri", "kandi", "ariko", "kuko", "njye",
     "wowe", "twe", "hari", "gute", "reka", "dukore",
     "bikore", "mbabarira", "ndagusabye", "bivuze",
-    "bisobanura", "umunsi", "uyu", "bimeze",
+    "bisobanura", "umunsi", "uyu", "bimeze", "mwaramutse",
+    "mwiriwe", "nitwa", "yitwa", "bangahe", "wenda",
+    "nshobora", "ushobora", "wumva", "ndashimira"
   ];
 
   const swWords = [
@@ -224,18 +217,41 @@ function detectLanguage(message) {
     "jina", "mimi", "wewe", "sisi", "yeye", "rafiki",
     "upendo", "mji", "wilaya", "historia", "rais", "nchi",
     "karibu", "samahani", "nzuri", "sana", "lakini",
-    "sababu", "lini", "wapi", "gani", "wangapi",
+    "sababu", "lini", "wapi", "gani", "wangapi", "kweli",
+    "pole", "shikamoo", "habari", "asubuhi", "jioni",
+    "ninataka", "ninaweza", "tafadhali", "ndugu"
   ];
 
-  const score = (list) =>
-    words.filter((word) => list.includes(word)).length;
+  let rwScore = words.filter(word => rwWords.includes(word)).length;
+  let swScore = words.filter(word => swWords.includes(word)).length;
 
-  const rwScore = score(rwWords);
-  const swScore = score(swWords);
+  // Clear language signals for common short messages
+  if (/^(muraho|amakuru|mwaramutse|mwiriwe|bite)$/.test(text)) {
+    return "Kinyarwanda";
+  }
+
+  if (/^(habari|hujambo|asante|shikamoo)$/.test(text)) {
+    return "Swahili";
+  }
 
   if (rwScore > swScore && rwScore > 0) return "Kinyarwanda";
   if (swScore > rwScore && swScore > 0) return "Swahili";
+
   return "English";
+}
+
+function isGreeting(text) {
+  return /^(hey|hi|hello|hello mpa ai|hey mpa ai|muraho|muraho mpa ai|amakuru|amakuru mpa ai|bite|mwaramutse|mwiriwe|habari|hujambo|good morning|good afternoon|good evening|how are you|how are you mpa ai)$/.test(text);
+}
+
+function greetingResponse(language) {
+  const answers = {
+    Kinyarwanda: "Muraho! Ndi Mpa AI. Nakugirira iki?",
+    English: "Hello! I'm Mpa AI. How can I help you?",
+    Swahili: "Habari! Mimi ni Mpa AI. Nikusaidie nini?",
+  };
+
+  return answers[language] || answers.English;
 }
 
 function fallback(language) {
