@@ -38,4 +38,384 @@ body{margin:0;font-family:Arial,sans-serif;background:#f5f7fb;color:#111827;heig
 .sender{font-size:11px;color:#9ca3af;margin-bottom:4px}
 .assistant .sender{color:#6b7280}
 .input-area{background:white;border-top:1px solid #e5e7eb;padding:14px 20px}
-.input-box{max-width:850px
+.input-box{max-width:850px;margin:auto;display:flex;gap:10px;align-items:flex-end}
+textarea{flex:1;resize:none;min-height:48px;max-height:140px;border:1px solid #d1d5db;border-radius:12px;padding:13px;font-family:inherit;font-size:15px;outline:none}
+textarea:focus{border-color:#111827}
+.send-btn{width:50px;height:48px;flex-shrink:0;border:0;border-radius:12px;background:#111827;color:white;cursor:pointer;font-size:18px}
+.send-btn:disabled{opacity:.5;cursor:not-allowed}
+.hint{max-width:850px;margin:7px auto 0;text-align:center;color:#9ca3af;font-size:11px}
+.typing{display:inline-flex;gap:4px}
+.typing span{width:6px;height:6px;background:#6b7280;border-radius:50%;animation:blink 1.2s infinite}
+.typing span:nth-child(2){animation-delay:.2s}
+.typing span:nth-child(3){animation-delay:.4s}
+@keyframes blink{0%,80%,100%{opacity:.3}40%{opacity:1}}
+.toast{position:fixed;bottom:95px;left:50%;transform:translateX(-50%);background:#111827;color:white;padding:10px 16px;border-radius:9px;font-size:13px;display:none;z-index:50;max-width:90%;text-align:center}
+@media(max-width:700px){
+.sidebar{position:fixed;z-index:20;left:-290px;top:0;bottom:0;transition:left .2s;box-shadow:none}
+.sidebar.open{left:0;box-shadow:5px 0 25px #0002}
+.menu-btn{display:block}
+.chat{padding:15px}
+.bubble{max-width:90%}
+.welcome{margin:50px auto}
+.welcome h1{font-size:25px}
+.input-area{padding:10px}
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <button class="new-chat" id="newChatBtn">＋ New Chat</button>
+    <div class="history-title">💬 Chat History</div>
+    <div id="history"></div>
+  </aside>
+
+  <main class="main">
+    <header class="header">
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu">☰</button>
+      <div>
+        <div class="logo">🤖 Mpa AI</div>
+        <div class="subtitle">AI yawe • Kinyarwanda • English • Swahili</div>
+      </div>
+    </header>
+
+    <section class="chat" id="chat">
+      <div class="welcome" id="welcome">
+        <div class="welcome-icon">🤖</div>
+        <h1>Murakaza neza kuri Mpa AI</h1>
+        <p>Baza ikibazo icyo ari cyo cyose. Mpa AI iragusubiza mu Kinyarwanda, English cyangwa Swahili.</p>
+      </div>
+    </section>
+
+    <footer class="input-area">
+      <div class="input-box">
+        <textarea id="messageInput" placeholder="Andika ikibazo cyawe..." rows="1"></textarea>
+        <button class="send-btn" id="sendBtn" aria-label="Send message">↑</button>
+      </div>
+      <div class="hint">Enter = Ohereza • Shift + Enter = Umurongo mushya</div>
+    </footer>
+  </main>
+</div>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+"use strict";
+
+const STORAGE_KEY = "mpa_ai_history";
+let currentMessages = [];
+let currentChatId = null;
+let requestInProgress = false;
+let toastTimer;
+
+const chatEl = document.getElementById("chat");
+const input = document.getElementById("messageInput");
+const sendBtn = document.getElementById("sendBtn");
+const historyEl = document.getElementById("history");
+const sidebar = document.getElementById("sidebar");
+const toastEl = document.getElementById("toast");
+
+function showToast(message) {
+  toastEl.textContent = message;
+  toastEl.style.display = "block";
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => {
+    toastEl.style.display = "none";
+  }, 3000);
+}
+
+function getHistory() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (!saved) return [];
+    const parsed = JSON.parse(saved);
+    return Array.isArray(parsed) ? parsed.filter(item =>
+      item && typeof item.id === "string" &&
+      Array.isArray(item.messages)
+    ) : [];
+  } catch (error) {
+    console.error("Could not read chat history:", error);
+    showToast("Ntibyashobotse gusoma Chat History muri browser.");
+    return [];
+  }
+}
+
+function saveHistory(chats) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(chats));
+    return true;
+  } catch (error) {
+    console.error("Could not save chat history:", error);
+    showToast("Ibiganiro ntibyabitswe. Umwanya wa browser ushobora kuba wuzuye.");
+    return false;
+  }
+}
+
+function renderHistory() {
+  const chats = getHistory().sort((a, b) =>
+    (b.updatedAt || "").localeCompare(a.updatedAt || "")
+  );
+
+  historyEl.replaceChildren();
+
+  if (!chats.length) {
+    const empty = document.createElement("div");
+    empty.className = "empty-history";
+    empty.textContent = "Nta biganiro bibitswe.";
+    historyEl.appendChild(empty);
+    return;
+  }
+
+  chats.forEach(item => {
+    const row = document.createElement("div");
+    row.className = "history-row";
+
+    const title = document.createElement("button");
+    title.type = "button";
+    title.className = "history-item" +
+      (item.id === currentChatId ? " active" : "");
+    title.textContent = item.title || "New Chat";
+    title.title = item.title || "New Chat";
+    title.onclick = () => loadChat(item.id);
+
+    const del = document.createElement("button");
+    del.type = "button";
+    del.className = "delete-chat";
+    del.textContent = "×";
+    del.title = "Siba iki kiganiro";
+    del.setAttribute("aria-label", "Siba " + (item.title || "ikiganiro"));
+    del.onclick = event => {
+      event.stopPropagation();
+      deleteChat(item.id);
+    };
+
+    row.append(title, del);
+    historyEl.appendChild(row);
+  });
+}
+
+function saveCurrentChat() {
+  if (!currentMessages.length) return;
+
+  if (!currentChatId) {
+    currentChatId = Date.now().toString() +
+      "-" + Math.random().toString(36).slice(2, 8);
+  }
+
+  const chats = getHistory();
+  const firstUserMessage = currentMessages.find(m => m.role === "user");
+  const title = firstUserMessage
+    ? firstUserMessage.content.trim().substring(0, 40)
+    : "New Chat";
+
+  const chatObject = {
+    id: currentChatId,
+    title: title || "New Chat",
+    messages: currentMessages,
+    updatedAt: new Date().toISOString()
+  };
+
+  const index = chats.findIndex(item => item.id === currentChatId);
+
+  if (index >= 0) {
+    chats[index] = chatObject;
+  } else {
+    chats.push(chatObject);
+  }
+
+  if (saveHistory(chats)) renderHistory();
+}
+
+function loadChat(id) {
+  const selected = getHistory().find(item => item.id === id);
+  if (!selected) {
+    showToast("Iki kiganiro ntikibashije kuboneka.");
+    renderHistory();
+    return;
+  }
+
+  currentChatId = selected.id;
+  currentMessages = selected.messages.map(message => ({
+    role: message.role,
+    content: String(message.content ?? "")
+  }));
+
+  chatEl.replaceChildren();
+  currentMessages.forEach(message =>
+    addMessageToUI(message.role, message.content)
+  );
+
+  renderHistory();
+  sidebar.classList.remove("open");
+}
+
+function newChat() {
+  currentChatId = null;
+  currentMessages = [];
+  showWelcome();
+  input.value = "";
+  input.style.height = "48px";
+  sidebar.classList.remove("open");
+  renderHistory();
+  input.focus();
+}
+
+function deleteChat(id) {
+  const chats = getHistory();
+  const remaining = chats.filter(item => item.id !== id);
+
+  if (!saveHistory(remaining)) return;
+
+  if (currentChatId === id) {
+    currentChatId = null;
+    currentMessages = [];
+    showWelcome();
+  }
+
+  renderHistory();
+  showToast("Ikiganiro cyasibwe.");
+}
+
+function showWelcome() {
+  chatEl.innerHTML = `
+    <div class="welcome" id="welcome">
+      <div class="welcome-icon">🤖</div>
+      <h1>Murakaza neza kuri Mpa AI</h1>
+      <p>Baza ikibazo icyo ari cyo cyose. Mpa AI iragusubiza mu Kinyarwanda, English cyangwa Swahili.</p>
+    </div>`;
+}
+
+function addMessageToUI(role, content) {
+  const welcome = document.getElementById("welcome");
+  if (welcome) welcome.remove();
+
+  const wrapper = document.createElement("div");
+  wrapper.className = "message " + (role === "user" ? "user" : "assistant");
+
+  const bubble = document.createElement("div");
+  bubble.className = "bubble";
+
+  const sender = document.createElement("div");
+  sender.className = "sender";
+  sender.textContent = role === "user" ? "Wowe" : "Mpa AI";
+
+  const text = document.createElement("div");
+  text.textContent = content;
+
+  bubble.append(sender, text);
+  wrapper.appendChild(bubble);
+  chatEl.appendChild(wrapper);
+  chatEl.scrollTop = chatEl.scrollHeight;
+}
+
+function showTyping() {
+  removeTyping();
+
+  const wrapper = document.createElement("div");
+  wrapper.className = "message assistant";
+  wrapper.id = "typingMessage";
+
+  const bubble = document.createElement("div");
+  bubble.className = "bubble";
+
+  const sender = document.createElement("div");
+  sender.className = "sender";
+  sender.textContent = "Mpa AI";
+
+  const dots = document.createElement("div");
+  dots.className = "typing";
+  for (let i = 0; i < 3; i++) {
+    dots.appendChild(document.createElement("span"));
+  }
+
+  bubble.append(sender, dots);
+  wrapper.appendChild(bubble);
+  chatEl.appendChild(wrapper);
+  chatEl.scrollTop = chatEl.scrollHeight;
+}
+
+function removeTyping() {
+  document.getElementById("typingMessage")?.remove();
+}
+
+async function sendMessage() {
+  const message = input.value.trim();
+
+  if (!message || requestInProgress) return;
+
+  requestInProgress = true;
+  sendBtn.disabled = true;
+  input.value = "";
+  input.style.height = "48px";
+
+  currentMessages.push({ role: "user", content: message });
+  addMessageToUI("user", message);
+  saveCurrentChat();
+  showTyping();
+
+  try {
+    const response = await fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message })
+    });
+
+    const contentType = response.headers.get("content-type") || "";
+    if (!contentType.includes("application/json")) {
+      throw new Error("Server ntiyagaruye igisubizo cya JSON.");
+    }
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.response || "Server error: " + response.status);
+    }
+
+    const answer = typeof data.response === "string" && data.response.trim()
+      ? data.response.trim()
+      : "Mbabarira, nta gisubizo nabonye. Ongera ugerageze.";
+
+    removeTyping();
+    currentMessages.push({ role: "assistant", content: answer });
+    addMessageToUI("assistant", answer);
+    saveCurrentChat();
+  } catch (error) {
+    console.error("Mpa AI request failed:", error);
+    removeTyping();
+
+    const errorMessage =
+      "Habaye ikibazo cyo kuvugana na Mpa AI. Reba internet wongere ugerageze.";
+
+    currentMessages.push({ role: "assistant", content: errorMessage });
+    addMessageToUI("assistant", errorMessage);
+    saveCurrentChat();
+  } finally {
+    requestInProgress = false;
+    sendBtn.disabled = false;
+    input.focus();
+  }
+}
+
+document.getElementById("newChatBtn").addEventListener("click", newChat);
+document.getElementById("menuBtn").addEventListener("click", () => {
+  sidebar.classList.toggle("open");
+});
+sendBtn.addEventListener("click", sendMessage);
+
+input.addEventListener("keydown", event => {
+  if (event.key === "Enter" && !event.shiftKey) {
+    event.preventDefault();
+    sendMessage();
+  }
+});
+
+input.addEventListener("input", function() {
+  this.style.height = "auto";
+  this.style.height = Math.min(this.scrollHeight, 140) + "px";
+});
+
+renderHistory();
+</script>
+</body>
+</html>
