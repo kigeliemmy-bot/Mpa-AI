@@ -64,34 +64,33 @@ function getLanguage(message) {
 
   const kinyarwandaWords = [
     "muraho", "amakuru", "urakoze", "murakoze",
-    "ndabaza", "ndashaka", "ese", "iki", "iki?",
-    "iki.", "iki!", "iki,", "ute", "uri", "ufite",
-    "mfite", "turashaka", "tugire", "byagenda",
+    "ndabaza", "ndashaka", "ese", "iki", "ute",
+    "uri", "ufite", "mfite", "turashaka", "tugire",
     "ubuzima", "urwanda", "igihugu", "nshaka",
     "nshobora", "wakora", "bikore", "mfasha",
     "bisobanura", "bivuze", "ryari", "angahe",
-    "zingahe", "tungahe", "ikihe", "gute",
-    "kuki", "kuba", "kandi", "ariko", "cyangwa",
-    "neza", "yego", "oya", "ndashimira"
+    "zingahe", "tungahe", "gute", "kuki", "kandi",
+    "ariko", "cyangwa", "neza", "yego", "oya",
+    "ndashimira", "wumva", "indirimbo", "umuntu",
+    "abantu", "ndashaka", "dukore", "yego"
   ];
 
   const swahiliWords = [
     "habari", "asante", "tafadhali", "karibu",
-    "nina", "nataka", "unaweza", "vipi",
-    "nini", "kwanini", "kwa nini", "lini",
-    "wapi", "ngapi", "kiswahili", "rafiki",
-    "sana", "nzuri", "ndiyo", "hapana",
-    "habari yako", "naomba", "mambo"
+    "nina", "nataka", "unaweza", "vipi", "nini",
+    "kwanini", "kwa nini", "lini", "wapi", "ngapi",
+    "kiswahili", "rafiki", "sana", "nzuri", "ndiyo",
+    "hapana", "naomba", "mambo", "habari yako"
   ];
 
   const englishWords = [
-    "hello", "please", "thank you", "what",
-    "when", "where", "why", "how", "which",
-    "who", "can you", "could you", "tell me",
-    "explain", "help me", "write", "translate",
-    "capital", "country", "language", "business",
-    "school", "education", "good morning",
-    "good evening", "i need", "i want", "how many"
+    "hello", "please", "thank you", "what", "when",
+    "where", "why", "how", "which", "who", "can you",
+    "could you", "tell me", "explain", "help me",
+    "write", "translate", "capital", "country",
+    "language", "business", "school", "education",
+    "good morning", "good evening", "i need", "i want",
+    "how many", "what is", "who is", "do you"
   ];
 
   function countMatches(words) {
@@ -133,9 +132,7 @@ function getSystemPrompt(message) {
 }
 
 function extractText(result) {
-  if (!result) {
-    return "";
-  }
+  if (!result) return "";
 
   if (typeof result === "string") {
     return result;
@@ -242,7 +239,6 @@ export default {
       }
 
       const language = getLanguage(lastUserMessage.content);
-
       const systemPrompt = getSystemPrompt(
         lastUserMessage.content
       );
@@ -266,9 +262,7 @@ export default {
 
         if (!answer) {
           return jsonResponse(
-            {
-              error: getErrorMessage(language),
-            },
+            { error: getErrorMessage(language) },
             502
           );
         }
@@ -281,9 +275,7 @@ export default {
         console.error("Mpa AI error:", error);
 
         return jsonResponse(
-          {
-            error: getErrorMessage(language),
-          },
+          { error: getErrorMessage(language) },
           502
         );
       }
