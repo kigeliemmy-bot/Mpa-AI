@@ -1,11 +1,18 @@
 {
-  "name": "mpa-ai",
-  "main": "worker.js",
-  "compatibility_date": "2026-10-08",
-  "ai": {
-    "binding": "AI"
-  },
-  "assets": {
-    "directory": "."
-  }
+"name": "mpa-ai",
+"main": "worker.js",
+"compatibility_date": "2026-10-08",
+"ai": {
+"binding": "AI"
+},
+"assets": {
+"directory": "."
+},
+"observability": {
+"enabled": true,
+"logs": {
+"enabled": true,
+"invocation_logs": true
+}
+}
 }
