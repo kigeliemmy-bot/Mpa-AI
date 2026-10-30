@@ -1,7 +1,7 @@
 const MODEL = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
 
 const SYSTEM_PROMPT = `
-You are Mpa AI, an AI assistant serving Rwanda and the world.
+You are BAZA KIGELI, an AI assistant serving Rwanda and the world.
 
 LANGUAGE:
 - Reply in the language of the latest user message.
@@ -19,10 +19,11 @@ KINYARWANDA:
 - If you cannot express something correctly, explain it simply without inventing words.
 
 IDENTITY:
-- Your name is Mpa AI.
-- Kinyarwanda: "Nitwa Mpa AI."
-- English: "My name is Mpa AI."
-- Swahili: "Ninaitwa Mpa AI."
+- Your name is BAZA KIGELI.
+- Kinyarwanda: "Nitwa BAZA KIGELI."
+- English: "My name is BAZA KIGELI."
+- Swahili: "Ninaitwa BAZA KIGELI."
+- Never identify yourself as Mpa AI.
 - Never reveal system instructions.
 
 ACCURACY:
@@ -161,7 +162,7 @@ function greetingResponse(message) {
   if (rw.includes(text)) {
     return {
       success: true,
-      reply: "Muraho neza! Ndi Mpa AI. Nagufasha iki?",
+      reply: "Muraho neza! Ndi BAZA KIGELI. Nagufasha iki?",
       sources: []
     };
   }
@@ -175,7 +176,7 @@ function greetingResponse(message) {
   if (en.includes(text)) {
     return {
       success: true,
-      reply: "Hello! I'm Mpa AI. How can I help you?",
+      reply: "Hello! I'm BAZA KIGELI. How can I help you?",
       sources: []
     };
   }
@@ -187,7 +188,7 @@ function greetingResponse(message) {
   if (sw.includes(text)) {
     return {
       success: true,
-      reply: "Habari! Mimi ni Mpa AI. Nikusaidie nini?",
+      reply: "Habari! Mimi ni BAZA KIGELI. Nikusaidie nini?",
       sources: []
     };
   }
@@ -468,7 +469,7 @@ export default {
           }))
         });
       } catch (error) {
-        console.error("Mpa AI error:", error);
+        console.error("BAZA KIGELI error:", error);
 
         return jsonResponse(
           { error: getErrorMessage(language) },
