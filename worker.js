@@ -8,15 +8,19 @@ LANGUAGE:
 - Support Kinyarwanda, English, and Swahili.
 - Follow explicit language requests.
 - Never mix languages unnecessarily.
-- If the language is unclear, ask a short clarification in the likely language.
+- Identify the language using the whole message, not just one word.
+- If the language is unclear, use the most likely language.
 
 KINYARWANDA:
-- Use natural, simple, correct Kinyarwanda used in Rwanda.
+- Use natural, fluent, everyday Kinyarwanda used in Rwanda.
 - Avoid literal translations from English.
 - Never insert random English or Swahili words.
-- Use short, clear sentences.
+- Use short, clear and grammatically correct sentences.
+- Avoid invented words and unnatural expressions.
+- Do not use phrases such as "Ni ngiki?".
+- Do not add "Ndagukunda" to ordinary greetings or answers.
 - Do not claim to be Rwandan or human.
-- If you cannot express something correctly, explain it simply without inventing words.
+- If you cannot express something correctly, explain it simply.
 
 IDENTITY:
 - Your name is BAZA KIGELI.
@@ -40,6 +44,8 @@ HELPFULNESS:
   music, creativity, and everyday questions.
 - Avoid unnecessary repetition.
 - Be friendly, respectful, and direct.
+- Do not use affectionate expressions unnecessarily.
+- Give useful examples when they help explain an answer.
 `;
 
 function jsonResponse(data, status = 200) {
@@ -85,7 +91,12 @@ function getLanguage(message) {
     "izabera", "ryari", "ese", "he", "iki",
     "ibiki", "ese koko", "byagenda bite",
     "ndagusaba", "ndashimira", "bite", "urakora",
-    "wowe se", "wabigenza ute", "ikinyarwanda"
+    "wowe se", "wabigenza ute", "ikinyarwanda",
+    "wowe witwa", "izina ryawe", "uri nde",
+    "ndashimira", "bimeze bite", "ndashaka ko",
+    "mbese", "urabona", "byagenze bite",
+    "mwaramutse neza", "muraho neza",
+    "nshaka kumenya uko", "ese ushobora"
   ];
 
   const sw = [
@@ -98,7 +109,8 @@ function getLanguage(message) {
     "jina lako", "niambie", "sijui", "ninaelewa",
     "kesho", "habari mpya", "bei", "uko aje",
     "unaishi", "ninahitaji", "inamaanisha nini",
-    "habari za leo"
+    "habari za leo", "unaweza kunisaidia",
+    "nataka kujua", "wewe ni nani"
   ];
 
   const en = [
@@ -115,7 +127,9 @@ function getLanguage(message) {
     "where is", "tell me about", "how does",
     "how do", "why is", "what are", "who are",
     "news", "today", "thanks", "goodbye",
-    "formula 1", "when will", "when is"
+    "formula 1", "when will", "when is",
+    "who are you", "what is your name",
+    "what's your name", "how can you help"
   ];
 
   function countMatches(words) {
@@ -150,13 +164,65 @@ function getLanguage(message) {
   return scores[0][0];
 }
 
+function identityResponse(message) {
+  const text = normalize(message);
+
+  const rwQuestions = [
+    "witwa nde",
+    "wowe witwa nde",
+    "izina ryawe ni irihe",
+    "uri nde",
+    "wowe uri nde"
+  ];
+
+  const enQuestions = [
+    "what is your name",
+    "what's your name",
+    "who are you",
+    "tell me your name"
+  ];
+
+  const swQuestions = [
+    "unaitwa nani",
+    "jina lako nani",
+    "wewe ni nani"
+  ];
+
+  if (rwQuestions.includes(text)) {
+    return {
+      success: true,
+      reply: "Nitwa BAZA KIGELI. Nagufasha iki?",
+      sources: []
+    };
+  }
+
+  if (enQuestions.includes(text)) {
+    return {
+      success: true,
+      reply: "My name is BAZA KIGELI. How can I help you?",
+      sources: []
+    };
+  }
+
+  if (swQuestions.includes(text)) {
+    return {
+      success: true,
+      reply: "Ninaitwa BAZA KIGELI. Nikusaidie nini?",
+      sources: []
+    };
+  }
+
+  return null;
+}
+
 function greetingResponse(message) {
   const text = normalize(message);
 
   const rw = [
     "muraho", "muraho mpa ai", "muraho neza",
     "amakuru mpa ai", "mwaramutse", "mwiriwe",
-    "bite", "bite mpa ai"
+    "bite", "bite mpa ai", "amakuru",
+    "mwaramutse neza"
   ];
 
   if (rw.includes(text)) {
@@ -199,7 +265,7 @@ function greetingResponse(message) {
 function shouldSearch(message) {
   const text = normalize(message);
 
-  return /\b(today|latest|current|currently|recent|news|weather|price|prices|score|scores|live|when|when will|when is|ryari|uzabera|izabera|amakuru mashya|uyu munsi|igiciro|ibiciro|habari mpya|bei|formula 1|f1|president|election|elections|results|schedule|forecast|official|amakuru|igihe)\b/i.test(text);
+  return /\b(today|latest|current|currently|recent|news|weather|price|prices|score|scores|live|when|when will|when is|ryari|uzabera|izabera|amakuru mashya|uyu munsi|igiciro|ibiciro|habari mpya|bei|formula 1|f1|president|election|elections|results|schedule|forecast|official|igihe)\b/i.test(text);
 }
 
 async function searchTavily(query, env) {
@@ -392,6 +458,10 @@ export default {
       }
 
       const language = getLanguage(lastUserMessage.content);
+
+      const identity = identityResponse(lastUserMessage.content);
+
+      if (identity) return jsonResponse(identity);
 
       const greeting = greetingResponse(lastUserMessage.content);
 
