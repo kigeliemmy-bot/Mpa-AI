@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#111827">
-<title>Baza kigeli</title>
+<title>BAZA KIGELI</title>
 
 <style>
 :root {
@@ -366,15 +366,15 @@ button {
 <div class="app">
 
   <aside class="sidebar" id="sidebar">
-    <div class="brand">🤖Baza kigeli</div>
-    <div class="brand-sub">AI yawe • Kinyarwanda • English • Swahili</div>
+    <div class="brand">🤖 BAZA KIGELI</div>
+    <div class="brand-sub">Ubwenge buhuza isi • Kinyarwanda • English • Swahili</div>
 
     <button class="new-chat" id="newChat">＋ New Chat</button>
 
     <div class="history-title">💬 Chat History</div>
     <div class="history-list" id="historyList"></div>
 
-    <div class="sidebar-footer">Baza kigeli • Ikiganiro cyawe, umwanya wawe.</div>
+    <div class="sidebar-footer">BAZA KIGELI • Ubwenge buhuza isi.</div>
   </aside>
 
   <div class="overlay" id="overlay"></div>
@@ -383,15 +383,15 @@ button {
     <header class="topbar">
       <button class="menu-button" id="menuButton" aria-label="Open menu">☰</button>
       <div>
-        <div class="top-title">🤖 Baza kigeli</div>
-        <div class="top-subtitle">AI yawe • Kinyarwanda • English • Swahili</div>
+        <div class="top-title">🤖 BAZA KIGELI</div>
+        <div class="top-subtitle">Ubwenge buhuza isi • Kinyarwanda • English • Swahili</div>
       </div>
     </header>
 
     <section class="messages" id="messages">
       <div class="welcome" id="welcome">
         <div class="welcome-icon">🤖</div>
-        <h1>Murakaza neza kuri Baza kigeli</h1>
+        <h1>Murakaza neza kuri BAZA KIGELI</h1>
         <p>Baza ikibazo cyawe mu Kinyarwanda, English cyangwa Swahili.</p>
       </div>
     </section>
@@ -536,7 +536,7 @@ function addMessageToUI(role, text) {
 
   const sender = document.createElement("div");
   sender.className = "sender";
-  sender.textContent = role === "user" ? "Wowe" : "Mpa AI";
+  sender.textContent = role === "user" ? "Wowe" : "BAZA KIGELI";
 
   const bubble = document.createElement("div");
   bubble.className = "bubble";
@@ -562,7 +562,7 @@ function showWelcome() {
   icon.textContent = "🤖";
 
   const heading = document.createElement("h1");
-  heading.textContent = "Murakaza neza kuri Mpa AI";
+  heading.textContent = "Murakaza neza kuri BAZA KIGELI";
 
   const paragraph = document.createElement("p");
   paragraph.textContent =
@@ -679,7 +679,7 @@ async function sendMessage() {
   busy = true;
   sendButton.disabled = true;
 
-  const loadingBubble = addMessageToUI("assistant", "Mpa AI iri gutekereza...");
+  const loadingBubble = addMessageToUI("assistant", "BAZA KIGELI iri gutekereza...");
 
   try {
     const response = await fetch("/api/chat", {
@@ -715,7 +715,7 @@ async function sendMessage() {
       data.message;
 
     if (typeof answer !== "string" || !answer.trim()) {
-      throw new Error("Mpa AI ntiyatanze igisubizo. Ongera ugerageze.");
+      throw new Error("BAZA KIGELI ntiyatanze igisubizo. Ongera ugerageze.");
     }
 
     loadingBubble.textContent = answer;
@@ -729,7 +729,7 @@ async function sendMessage() {
     loadingBubble.textContent =
       "Habaye ikibazo cyo kubona igisubizo. Reba internet yawe wongere ugerageze.";
 
-    console.error("Mpa AI error:", error);
+    console.error("BAZA KIGELI error:", error);
 
   } finally {
     persistCurrentChat();
