@@ -33,9 +33,33 @@ function normalize(value) {
 
 function getLanguage(message) {
   const text = normalize(message);
-  const rw = ["muraho","amakuru","urakoze","murakoze","ndashaka","nshaka","mfasha","urwanda","igihugu","angahe","zingahe","tungahe","gute","kuki","kandi","ariko","cyangwa","yego","oya","indirimbo","umuntu","abantu","dukore","ushaka","ufasha","uturere","witwa nde","mbwira","mwiriwe","mwaramutse","nkeneye","uyu munsi","ryari","ese","ibiki","bite","ikinyarwanda","intego","ubuzima","ni byiza"];
-  const sw = ["habari","asante","tafadhali","karibu","nataka","unaweza","vipi","kwanini","kwa nini","wapi","ngapi","kiswahili","rafiki","nzuri","ndiyo","hapana","naomba","mambo","ninahitaji"];
-  const en = ["hello","hi","hey","please","thank you","what","when","where","why","how","which","who","can you","tell me","explain","help me","write","translate","education","good morning","i need","i want","how many","what is","your name","news","today","formula 1"];
+
+  const rw = [
+    "muraho","amakuru","urakoze","murakoze","ndashaka",
+    "nshaka","mfasha","urwanda","igihugu","angahe",
+    "zingahe","tungahe","gute","kuki","kandi","ariko",
+    "cyangwa","yego","oya","indirimbo","umuntu","abantu",
+    "dukore","ushaka","ufasha","uturere","witwa nde",
+    "mbwira","mwiriwe","mwaramutse","nkeneye","uyu munsi",
+    "ryari","ese","ibiki","bite","ikinyarwanda",
+    "intego","ubuzima","ni byiza"
+  ];
+
+  const sw = [
+    "habari","asante","tafadhali","karibu","nataka",
+    "unaweza","vipi","kwanini","kwa nini","wapi",
+    "ngapi","kiswahili","rafiki","nzuri","ndiyo",
+    "hapana","naomba","mambo","ninahitaji"
+  ];
+
+  const en = [
+    "hello","hi","hey","please","thank you","what",
+    "when","where","why","how","which","who","can you",
+    "tell me","explain","help me","write","translate",
+    "education","good morning","i need","i want",
+    "how many","what is","your name","news","today",
+    "formula 1"
+  ];
 
   const score = words =>
     words.reduce((n, w) => n + (text.includes(w) ? 1 : 0), 0);
